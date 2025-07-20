@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: blog-application-db
+    environment:
+      POSTGRES_USER: sakuheinonen
+      POSTGRES_PASSWORD: 2311
+      POSTGRES_DB: blog_db
+    ports:
+      - "5432:5432"
+    networks:
+      - blog-network
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
+  
+networks:
+  blog-network:
+    driver: bridge
