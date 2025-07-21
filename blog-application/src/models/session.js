@@ -2,61 +2,56 @@ const { Model, DataTypes } = require("sequelize");
 
 const { sequelize } = require("../util/db");
 
-class User extends Model {}
+class Session extends Model {}
 
-User.init(
+Session.init(
 	{
 		id: {
 			type: DataTypes.INTEGER,
 			primaryKey: true,
 			autoIncrement: true,
-			unique: true,
 		},
-		username: {
-			type: DataTypes.STRING,
+		userId: {
+			type: DataTypes.INTEGER,
 			allowNull: false,
-			unique: true,
-			validate: {
-				isEmail: {
-					msg: "Username must be a valid email address",
-				},
+			field: "user_id",
+			references: {
+				model: "users",
+				key: "id",
 			},
+			onDelete: "CASCADE",
 		},
-		name: {
+		sessionToken: {
 			type: DataTypes.STRING,
 			allowNull: false,
+			field: "session_token",
+			unique: true,
 		},
-		hashedPassword: {
-			type: DataTypes.STRING,
+		expiresAt: {
+			type: DataTypes.DATE,
 			allowNull: false,
-			field: "hashed_password",
-		},
-		salt: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		disabled: {
-			type: DataTypes.BOOLEAN,
-			allowNull: false,
-			defaultValue: false,
+			field: "expires_at",
 		},
 		createdAt: {
 			type: DataTypes.DATE,
+			allowNull: false,
 			defaultValue: DataTypes.NOW,
 			field: "created_at",
 		},
 		updatedAt: {
 			type: DataTypes.DATE,
+			allowNull: false,
 			defaultValue: DataTypes.NOW,
 			field: "updated_at",
 		},
 	},
-
 	{
 		sequelize,
+		underscored: true,
+		modelName: "session",
+		tableName: "server_side_sessions",
 		timestamps: false,
-		modelName: "user",
 	}
 );
 
-module.exports = User;
+module.exports = Session;

@@ -1,8 +1,7 @@
 const router = require("express").Router();
 const { Op } = require("sequelize");
 
-const blogFinder = require("../util/middleware/blogFinder");
-const tokenExtractor = require("../util/middleware/tokenExtractor");
+const { blogFinder, sessionExtractor } = require("../util/middleware");
 const { Blog, User } = require("../models");
 
 router.get("/", async (req, res) => {
@@ -15,39 +14,54 @@ router.get("/", async (req, res) => {
 	}
 
 	const blogs = await Blog.findAll({
+		attributes: { exclude: ["userId"] },
 		include: [
 			{
 				model: User,
 				as: "user",
-				attributes: { exclude: ["hashedPassword", "salt"] },
+				attributes: {
+					exclude: [
+						"hashedPassword",
+						"salt",
+						"disabled",
+						"createdAt",
+						"updatedAt",
+					],
+				},
 			},
 		],
-		attributes: { exclude: ["userId"] },
 		where,
 		order: [["likes", "DESC"]],
 	});
 	res.json(blogs);
 });
 
-router.post("/", tokenExtractor, async (req, res) => {
-	if (!req.decodedToken || !req.decodedToken.id) {
-		return res.status(401).json({ error: "token missing or invalid" });
+router.post("/", sessionExtractor, async (req, res) => {
+	if (!req.session || !req.session.userId) {
+		return res.status(401).json({ error: "session missing or invalid" });
 	}
 
-	const userId = req.decodedToken.id;
+	const userId = req.session.userId;
 
 	if (!userId) {
-		return res.status(401).json({ error: "User ID not found in token" });
+		return res.status(401).json({ error: "User ID not found in session" });
 	}
 
-	const { author, title, url, likes = 0 } = req.body;
-	const newBlog = await Blog.create({ author, title, url, likes, userId });
+	const { author, title, url, likes = 0, year } = req.body;
+	const newBlog = await Blog.create({
+		author,
+		title,
+		url,
+		likes,
+		year,
+		userId,
+	});
 	res.status(201).json(newBlog);
 });
 
-router.delete("/:id", blogFinder, tokenExtractor, async (req, res) => {
+router.delete("/:id", blogFinder, sessionExtractor, async (req, res) => {
 	if (req.blog) {
-		if (req.decodedToken.id !== req.blog.userId) {
+		if (req.session.userId !== req.blog.userId) {
 			return res.status(403).json({ error: "Unauthorized action" });
 		}
 		await req.blog.destroy();

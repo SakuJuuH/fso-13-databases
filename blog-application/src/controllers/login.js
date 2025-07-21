@@ -1,8 +1,7 @@
 const loginRouter = require("express").Router();
 const bcrypt = require("bcrypt");
-const { User } = require("../models");
-const jwt = require("jsonwebtoken");
-const { SECRET } = require("../util/config");
+const crypto = require("crypto");
+const { User, Session } = require("../models");
 
 loginRouter.post("/", async (req, res) => {
 	const { username, password } = req.body;
@@ -14,24 +13,36 @@ loginRouter.post("/", async (req, res) => {
 	}
 
 	const user = await User.findOne({ where: { username } });
+	console.log("User found:", user);
 	if (!user) {
 		return res.status(401).json({ error: "Invalid username or password" });
 	}
 
-	const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+	if (user.disabled) {
+		return res.status(403).json({ error: "User is disabled" });
+	}
 
+	const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
 	if (!passwordMatch) {
 		return res.status(401).json({ error: "Invalid username or password" });
 	}
 
-	const userForToken = {
-		username: user.username,
-		id: user.id,
-	};
+	const sessionToken = crypto.randomBytes(64).toString("hex");
+	const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-	const token = jwt.sign(userForToken, SECRET, { expiresIn: "1h" });
+	await Session.destroy({
+		where: {
+			userId: user.id,
+		},
+	});
 
-	res.status(200).json({ token });
+	await Session.create({
+		sessionToken,
+		userId: user.id,
+		expiresAt,
+	});
+
+	res.status(200).json({ sessionToken, expiresAt });
 });
 
 module.exports = loginRouter;

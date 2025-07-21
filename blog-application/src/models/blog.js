@@ -14,6 +14,23 @@ Blog.init(
 		},
 		author: {
 			type: DataTypes.STRING,
+			allowNull: false,
+		},
+		year: {
+			type: DataTypes.INTEGER,
+			validate: {
+				isInt: {
+					msg: "Year must be an integer",
+				},
+				min: {
+					args: [1991],
+					msg: "Year must be at least 1991",
+				},
+				max: {
+					args: [new Date().getFullYear()],
+					msg: "Year cannot be greater than the current year",
+				},
+			},
 		},
 		url: {
 			type: DataTypes.STRING,
@@ -26,6 +43,16 @@ Blog.init(
 		likes: {
 			type: DataTypes.INTEGER,
 			defaultValue: 0,
+		},
+		createdAt: {
+			type: DataTypes.DATE,
+			defaultValue: DataTypes.NOW,
+			field: "created_at",
+		},
+		updatedAt: {
+			type: DataTypes.DATE,
+			defaultValue: DataTypes.NOW,
+			field: "updated_at",
 		},
 	},
 	{

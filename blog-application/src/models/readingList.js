@@ -2,61 +2,60 @@ const { Model, DataTypes } = require("sequelize");
 
 const { sequelize } = require("../util/db");
 
-class User extends Model {}
+class ReadingList extends Model {}
 
-User.init(
+ReadingList.init(
 	{
 		id: {
 			type: DataTypes.INTEGER,
 			primaryKey: true,
 			autoIncrement: true,
-			unique: true,
 		},
-		username: {
-			type: DataTypes.STRING,
+		userId: {
+			type: DataTypes.INTEGER,
 			allowNull: false,
-			unique: true,
-			validate: {
-				isEmail: {
-					msg: "Username must be a valid email address",
-				},
+			field: "user_id",
+			references: {
+				model: "users",
+				key: "id",
 			},
+			onDelete: "CASCADE",
 		},
-		name: {
-			type: DataTypes.STRING,
+		blogId: {
+			type: DataTypes.INTEGER,
 			allowNull: false,
+			field: "blog_id",
+			references: {
+				model: "blogs",
+				key: "id",
+			},
+			onDelete: "CASCADE",
 		},
-		hashedPassword: {
-			type: DataTypes.STRING,
-			allowNull: false,
-			field: "hashed_password",
-		},
-		salt: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		disabled: {
+		read: {
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,
 		},
 		createdAt: {
 			type: DataTypes.DATE,
+			allowNull: false,
 			defaultValue: DataTypes.NOW,
 			field: "created_at",
 		},
 		updatedAt: {
 			type: DataTypes.DATE,
+			allowNull: false,
 			defaultValue: DataTypes.NOW,
 			field: "updated_at",
 		},
 	},
-
 	{
 		sequelize,
+		underscored: true,
+		modelName: "readingList",
+		tableName: "reading_lists",
 		timestamps: false,
-		modelName: "user",
 	}
 );
 
-module.exports = User;
+module.exports = ReadingList;
